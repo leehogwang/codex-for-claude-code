@@ -16,7 +16,13 @@ Utilities for running Codex-backed workflows inside Claude Code.
 Inside a Claude Code session in this repo:
 
 ```text
-/compare 아이디어를 구체화해줄래? 구현은 아직 하지마
+/compare Refactor this Python function for readability without changing behavior.
+```
+
+Another example:
+
+```text
+/compare Explain the tradeoffs between React Query and SWR for a dashboard app.
 ```
 
 The command returns:
