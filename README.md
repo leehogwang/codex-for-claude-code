@@ -69,6 +69,12 @@ Keeps Claude as the default backend while routing only the Haiku slot through Co
 scripts/claude-mix --dangerously-skip-permissions
 ```
 
+Important:
+
+- `claude-mix` does not eliminate Claude usage.
+- Claude Code's harness can still use non-Haiku slots such as Sonnet or Opus, and custom commands may still invoke Claude-backed paths.
+- If you want to prevent Claude billing as much as possible, use `claude-codex-only` instead of `claude-mix`.
+
 Optional override:
 
 ```bash
@@ -82,6 +88,8 @@ Routes all Claude Code slots to Codex aliases while preserving the familiar slot
 - `haiku` -> `codex-haiku(medium)`
 - `sonnet` -> `codex-sonnet(high)`
 - `opus` -> `codex-opus(xhigh)`
+
+Use this profile if your goal is to avoid Claude billing from normal Claude Code slot selection.
 
 ```bash
 scripts/claude-codex-only --dangerously-skip-permissions
