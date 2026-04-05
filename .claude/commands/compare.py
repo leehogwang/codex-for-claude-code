@@ -15,12 +15,18 @@ from pathlib import Path
 CLAUDE_BIN = Path(
     os.environ.get("CLAUDE_COMPARE_CLAUDE_BIN", str(Path.home() / ".local/bin/claude"))
 )
-CLAUDE_MIX_BIN = Path(
-    os.environ.get("CLAUDE_COMPARE_CLAUDE_MIX_BIN", str(Path.home() / ".local/bin/claude-mix"))
+CLAUDE_CODEX_BIN = Path(
+    os.environ.get("CLAUDE_COMPARE_CODEX_BIN", str(Path.home() / ".local/bin/claude-mix"))
+)
+CLAUDE_JUDGE_BIN = Path(
+    os.environ.get("CLAUDE_COMPARE_JUDGE_BIN", str(CLAUDE_CODEX_BIN))
 )
 CLAUDE_PROJECTS_DIR = Path(
     os.environ.get("CLAUDE_COMPARE_PROJECTS_DIR", str(Path.home() / ".claude/projects"))
 )
+SONNET_MODEL = os.environ.get("CLAUDE_COMPARE_SONNET_MODEL", "sonnet")
+CODEX_MODEL = os.environ.get("CLAUDE_COMPARE_CODEX_MODEL", "codex-haiku(xhigh)")
+JUDGE_MODEL = os.environ.get("CLAUDE_COMPARE_JUDGE_MODEL", CODEX_MODEL)
 READ_ONLY_TOOLS = "Read,Grep,Glob"
 MAX_ERROR_CHARS = 2000
 SESSION_PROMPT_RETRY_COUNT = 120
@@ -438,10 +444,10 @@ def run_answer_model(
 
 def run_judge_model(prompt: str, sonnet_output: str, codex_output: str) -> str | None:
     command = [
-        str(CLAUDE_MIX_BIN),
+        str(CLAUDE_JUDGE_BIN),
         "-p",
         "--model",
-        "codex-haiku(xhigh)",
+        JUDGE_MODEL,
         "--tools",
         "",
         "--permission-mode",
@@ -527,15 +533,15 @@ def main() -> int:
             run_answer_model,
             "Sonnet",
             CLAUDE_BIN,
-            "sonnet",
+            SONNET_MODEL,
             prompt,
             recent_context,
         )
         codex_future = executor.submit(
             run_answer_model,
             "Codex",
-            CLAUDE_MIX_BIN,
-            "codex-haiku(xhigh)",
+            CLAUDE_CODEX_BIN,
+            CODEX_MODEL,
             prompt,
             recent_context,
         )

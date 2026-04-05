@@ -1,51 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-CLIPROXY_DIR="${CLIPROXY_DIR:-$HOME/CLIProxyAPI}"
-CLIPROXY_PORT="${CLIPROXY_PORT:-8317}"
-REAL_CLAUDE="${REAL_CLAUDE:-$HOME/.local/bin/claude}"
-START_SCRIPT="${START_SCRIPT:-$CLIPROXY_DIR/scripts/start-proxy.sh}"
-API_KEY_FILE="${API_KEY_FILE:-$CLIPROXY_DIR/runtime/client-api-key.txt}"
-AUTH_DIR="${AUTH_DIR:-$CLIPROXY_DIR/runtime/auth}"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/claude-proxy-common.sh"
+
+REAL_CLAUDE="$(resolve_real_claude)"
 HAIKU_MODEL="${HAIKU_MODEL:-codex-haiku(xhigh)}"
 
-has_provider_auth() {
-  local provider="$1"
-  find "$AUTH_DIR" -maxdepth 1 -type f -name '*.json' -print0 2>/dev/null | \
-    xargs -r -0 grep -l "\"type\":\"$provider\"" 2>/dev/null | grep -q .
-}
-
-for arg in "$@"; do
-  case "$arg" in
-    --help|-h|help|--version|-v)
-      exec "$REAL_CLAUDE" "$@"
-      ;;
-  esac
-done
-
-if ! ss -ltn | grep -q ":${CLIPROXY_PORT} "; then
-  "$START_SCRIPT" >/dev/null
+if should_passthrough_to_claude "$@"; then
+  exec "$REAL_CLAUDE" "$@"
 fi
 
-if ! has_provider_auth codex; then
-  echo "Codex OAuth is not configured for CLIProxyAPI."
-  echo "Run the login flow for your CLIProxyAPI setup first."
-  exit 1
-fi
+ensure_proxy_running
+require_provider_auth codex
+require_provider_auth claude
+load_proxy_env
 
-if ! has_provider_auth claude; then
-  echo "Claude OAuth is not configured for CLIProxyAPI."
-  echo "Run the login flow for your CLIProxyAPI setup first."
-  exit 1
-fi
-
-if [[ ! -f "$API_KEY_FILE" ]]; then
-  echo "Missing API key file: $API_KEY_FILE"
-  exit 1
-fi
-
-export ANTHROPIC_BASE_URL="http://127.0.0.1:${CLIPROXY_PORT}"
-export ANTHROPIC_AUTH_TOKEN="$(cat "$API_KEY_FILE")"
 export ANTHROPIC_DEFAULT_HAIKU_MODEL="$HAIKU_MODEL"
 export ANTHROPIC_DEFAULT_HAIKU_MODEL_NAME="GPT-5.4 via Codex"
 export ANTHROPIC_DEFAULT_HAIKU_MODEL_DESCRIPTION="Haiku alias routed through CLIProxyAPI to GPT-5.4"
